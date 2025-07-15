@@ -4,7 +4,7 @@ A complete Kubernetes deployment setup for Kong Native Event Proxy (KNEP) with A
 
 ## 🚀 Overview
 
-This repository provides production-ready Kubernetes manifests and automation scripts for deploying Kong Native Event Proxy as a secure, multi-tenant Kafka gateway. KNEP acts as a proxy layer between Kafka clients and Kafka clusters, enabling advanced routing, authentication, and topic management capabilities.
+This repository provides Kubernetes-ready manifests and automation scripts for deploying Kong Native Event Proxy as a secure, multi-tenant Kafka gateway. KNEP acts as a proxy layer between Kafka clients and Kafka clusters, enabling advanced routing, authentication, and topic management capabilities.
 
 ### Key Features
 
