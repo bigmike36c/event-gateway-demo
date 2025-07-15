@@ -10,7 +10,7 @@ This repository provides Kubernetes-ready manifests and automation scripts for d
 
 - **Multi-tenant Topic Routing**: Automatic topic prefixing for team isolation (`team-a` → `a-` prefix, `team-b` → `b-` prefix)
 - **SNI-based Routing**: Route traffic based on Server Name Indication for different teams
-- **TLS Termination**: Wildcard certificate support for `*.127-0-0-1.sslip.io` domains
+- **TLS Termination**: Wildcard certificate support
 - **Kong Gateway Integration**: Full integration with Kong Ingress Controller
 - **Kafka Cluster**: Strimzi-based Kafka deployment with KRaft mode
 - **Observability**: Built-in health checks and metrics endpoints
@@ -58,12 +58,10 @@ kubectl apply -f wildcard-tls-secret.yaml -n knep
 
 # Create Konnect secret (replace with your values)
 kubectl create secret generic konnect-env-secret \
-  --from-literal=KNEP__KONNECT__CONTROL_PLANE_ID=your-cp-id \
-  --from-literal=KNEP__KONNECT__AUTH__PAT=your-pat-token \
+  --from-literal=KONNECT_API_HOSTNAME=your-region \
+  --from-literal=KONNECT_CONTROL_PLANE_ID=your-cp-id \
+  --from-literal=KONNECT_API_TOKEN=your-pat-token \
   -n knep
-
-# Apply KNEP configuration
-kubectl create configmap knep-config --from-file=knep-config.yaml -n knep
 ```
 
 ### 5. Deploy KNEP Gateway
