@@ -1,0 +1,12 @@
+# Generated certificates
+*.crt
+*.key
+
+# Temporary files
+*.tmp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store

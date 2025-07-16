@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: knep-certificate
+spec:
+  secretName: tls-secret
+  duration: 2160h
+  renewBefore: 360h
+  subject:
+    organizations:
+    - knep
+  commonName: '*.127-0-0-1.sslip.io'
+  dnsNames:
+  - '*.127-0-0-1.sslip.io'
+  - 127-0-0-1.sslip.io
+  - '*.team-a.127-0-0-1.sslip.io'
+  - team-a.127-0-0-1.sslip.io
+  - '*.team-b.127-0-0-1.sslip.io'
+  - team-b.127-0-0-1.sslip.io
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer

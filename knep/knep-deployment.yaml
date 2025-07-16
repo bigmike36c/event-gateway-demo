@@ -38,7 +38,7 @@ spec:
               name: konnect-env-secret
         env:
         - name: KNEP__OBSERVABILITY__LOG_FLAGS
-          value: "info,knep=debug"
+          value: "info,knep=info"
         readinessProbe:
           httpGet:
             path: /health/probes/readiness
