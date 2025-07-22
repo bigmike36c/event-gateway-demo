@@ -19,8 +19,8 @@ spec:
   - name: proxy
     port: 80
     protocol: HTTP
-  - name: stream9443
-    port: 9443
+  - name: stream-9092
+    port: 9092
     protocol: TLS
     tls:
       mode: Passthrough
@@ -35,7 +35,7 @@ metadata:
 spec:
   parentRefs:
     - name: kong
-      sectionName: stream9443
+      sectionName: stream-9092
   hostnames:
     - "bootstrap.team-a.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
     - "broker-0.team-a.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
@@ -55,7 +55,7 @@ metadata:
 spec:
   parentRefs:
     - name: kong
-      sectionName: stream9443
+      sectionName: stream-9092
   hostnames:
     - "bootstrap.team-b.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
     - "broker-0.team-b.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake

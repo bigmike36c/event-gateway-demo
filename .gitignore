@@ -10,3 +10,6 @@
 .vscode/
 .idea/
 .DS_Store
+
+# Secrets
+*-secret.yaml

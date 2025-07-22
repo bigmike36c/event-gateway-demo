@@ -2,7 +2,7 @@
 
 A complete Kubernetes deployment setup for Kong Native Event Proxy (KNEP) with Apache Kafka integration, featuring multi-tenant topic routing, TLS termination, and Kong Ingress Controller gateway configuration.
 
-## 🚀 Overview
+##  Overview
 
 This repository provides Kubernetes-ready manifests and automation scripts for deploying Kong Native Event Proxy as a secure, multi-tenant Kafka gateway. KNEP acts as a proxy layer between Kafka clients and Kafka clusters, enabling advanced routing, authentication, and topic management capabilities.
 
@@ -20,60 +20,95 @@ This repository provides Kubernetes-ready manifests and automation scripts for d
 
 - Kubernetes cluster (1.24+)
 - kubectl configured
+- [Gateway API experimental](https://gateway-api.sigs.k8s.io/) installed
+  ```bash
+  kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
+  ```
 - [Strimzi Kafka Operator](https://strimzi.io/) installed
 - [Kong Ingress Controller](https://docs.konghq.com/kubernetes-ingress-controller/) installed
-- OpenSSL (for certificate generation)
+  - **Important**: KIC must be installed with the `--feature-gates=GatewayAlpha=true` flag to enable TLSRoute support. If using Helm, run the install command with `--set controller.ingressController.env.feature_gates="GatewayAlpha=true"`
+- OpenSSL (for manual certificate generation)
+- [cert-manager](https://cert-manager.io/) (optional, for automated certificate management)
 
-## 🛠️ Quick Start
+## 🚀 Quick Start
 
-### 1. Deploy Kafka Cluster
-
+### 1. Create Namespaces
 ```bash
 kubectl create namespace kafka
-kubectl apply -f kafka-cluster.yaml -n kafka
-```
-
-### 2. Create KNEP Namespace
-
-```bash
 kubectl create namespace knep
 ```
 
-### 3. Generate TLS Certificates
-
+### 2. Deploy Kafka Cluster
 ```bash
-./generate-wildcard-cert.sh
+# Install strimzi if not already installed
+kubectl apply -f https://strimzi.io/install/latest\?namespace\=kafka -n kafka
+
+# Deploy Kafka resources
+kubectl apply -f kafka/ -n kafka
 ```
 
-This creates:
-- `wildcard.crt` - TLS certificate
-- `wildcard.key` - Private key
-- `wildcard-tls-secret.yaml` - Kubernetes secret manifest
+### 3. Setup TLS Certificates
 
-### 4. Deploy KNEP Configuration and Secrets
+**Option A: Using cert-manager (Recommended)**
 
 ```bash
-# Apply TLS secret
-kubectl apply -f wildcard-tls-secret.yaml -n knep
+# Install cert-manager if not already installed
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.yaml
 
+# Deploy certificate resources
+kubectl apply -f certificates/ -n knep
+```
+
+**Option B: Manual Certificate Generation**
+```bash
+# Generate certificates
+./scripts/generate-wildcard-cert.sh
+
+# Apply the generated secret
+kubectl apply -f ./wildcard-tls-secret.yaml -n knep
+```
+
+### 4. Deploy KNEP
+```bash
 # Create Konnect secret (replace with your values)
 kubectl create secret generic konnect-env-secret \
   --from-literal=KONNECT_API_HOSTNAME=your-region \
   --from-literal=KONNECT_CONTROL_PLANE_ID=your-cp-id \
   --from-literal=KONNECT_API_TOKEN=your-pat-token \
   -n knep
+
+# Deploy KNEP components
+kubectl apply -f knep/ -n knep
 ```
 
-### 5. Deploy KNEP Gateway
-
+### 5. Configure Kong Gateway with TLSRoute support
 ```bash
-kubectl apply -f knep-deployment.yaml -n knep
+# Create Konnect client certificate secret (replace with your values)
+kubectl create secret tls konnect-client-tls -n kong --cert=./tls.crt --key=./tls.key
+
+# Add Kong Ingress Controller repository
+helm repo add kong https://charts.konghq.com
+helm repo update
+
+# Add the TCP TLS listener to the Kong values.yaml file
+  proxy:
+    stream:
+    - containerPort: 9092
+      servicePort: 9092
+      protocol: TCP
+      parameters:
+      - ssl
+
+# Install Kong with TLSRoute support
+helm install kong kong/ingress -n kong --create-namespace --set controller.ingressController.env.feature_gates="FillIDs=true,GatewayAlpha=tru" --values ./values.yaml
+
+# Deploy Gateway API resources
+kubectl apply -f kong/ -n knep
 ```
 
-### 6. Configure Kong Gateway
-
+### Cleanup
 ```bash
-kubectl apply -f kic-gateway.yaml -n knep
+./scripts/cleanup.sh
 ```
 
 ## 🏗️ Architecture
@@ -113,7 +148,43 @@ Traffic is routed based on the SNI hostname:
 - `*.team-a.127-0-0-1.sslip.io` → team-a virtual cluster
 - `*.team-b.127-0-0-1.sslip.io` → team-b virtual cluster
 
-## 📊 Monitoring & Health Checks
+## � Certificate Management
+
+### Manual Certificate Generation
+
+The `generate-wildcard-cert.sh` script creates self-signed certificates suitable for development and testing. The certificates include all necessary Subject Alternative Names (SANs) for the multi-tenant setup:
+
+- `*.127-0-0-1.sslip.io` (wildcard for all subdomains)
+- `*.team-a.127-0-0-1.sslip.io` and `*.team-b.127-0-0-1.sslip.io` (team-specific wildcards)
+- `bootstrap.team-a.127-0-0-1.sslip.io` and `bootstrap.team-b.127-0-0-1.sslip.io` (bootstrap endpoints)
+
+**Pros:**
+- Quick setup for development
+- No additional dependencies
+- Full control over certificate properties
+
+**Cons:**
+- Manual renewal required (365-day validity)
+- Self-signed certificates (browser warnings)
+- No automatic rotation
+
+### cert-manager Integration
+
+The cert-manager approach uses a self-signed ClusterIssuer to automatically generate and manage certificates. This provides:
+
+**Pros:**
+- Automatic certificate renewal
+- Kubernetes-native certificate lifecycle management
+- Easy integration with other issuers (Let's Encrypt, CA, etc.)
+- Automatic secret creation and updates
+
+**Cons:**
+- Requires cert-manager installation
+- Additional complexity for simple setups
+
+**Production Note:** For production deployments, consider configuring cert-manager with a proper CA or ACME issuer instead of the self-signed issuer.
+
+## �📊 Monitoring & Health Checks
 
 KNEP provides several endpoints for monitoring:
 
@@ -123,8 +194,18 @@ KNEP provides several endpoints for monitoring:
 
 ## 🧪 Testing
 
-### Test Kafka Connection
+### Quick Status Check
+```bash
+# Check deployment status
+kubectl get pods -n knep
+kubectl get pods -n kafka
 
+# Check certificate status
+kubectl get certificate -n knep
+kubectl get secret tls-secret -n knep
+```
+
+### Test Kafka Connection
 ```bash
 # Port forward to KNEP service
 kubectl port-forward svc/knep-gateway 9092:9092 -n knep
@@ -137,7 +218,6 @@ kafka-topics --list --bootstrap-server localhost:9092
 ```
 
 ### Test with TLS
-
 ```bash
 # Port forward Kong gateway
 kubectl port-forward svc/kong-proxy 9443:9443 -n kong
@@ -148,21 +228,62 @@ kafka-console-producer --topic my-topic \
   --producer-property security.protocol=SSL
 ```
 
-## 📁 File Structure
+For more detailed testing commands and examples, see [`examples/test-commands.md`](examples/test-commands.md).
+
+## 📋 Components
+
+### Kafka Cluster (`kafka/`)
+- `kafka-cluster.yaml` - Strimzi Kafka configuration with KRaft mode
+
+### KNEP Proxy (`knep/`)
+- `knep-config.yaml` - Multi-tenant proxy configuration with topic routing
+- `knep-deployment.yaml` - Deployment, service, and health checks
+- `konnect-secret.yaml` - Kong Konnect credentials template
+
+### Kong Gateway (`kong/`)
+- `kic-gateway.yaml` - Gateway configuration with SNI-based TLS routing
+- `kong-values.yaml` - Helm values for Kong installation
+
+### Certificates (`certificates/`)
+- `cluster-issuer.yaml` - cert-manager self-signed issuer
+- `knep-certificate.yaml` - Certificate definition with multi-domain SANs
+- `tls-secret.yaml` - Manual certificate secret template
+
+### Scripts (`scripts/`)
+- `cleanup.sh` - Complete cleanup script
+- `generate-wildcard-cert.sh` - Manual certificate generation
+- `create-tls-secret.sh` - Alternative TLS secret creation
+- `kafkactl-helper.sh` - Kafka administration helper
+
+### Examples (`examples/`)
+- `test-commands.md` - Comprehensive testing and troubleshooting commands
+- `kafka-client-configs/` - Sample client configurations for different teams
+
+## 📁 Repository Structure
 
 ```
-├── README.md                    # This file
-├── kafka-cluster.yaml          # Strimzi Kafka cluster configuration
-├── knep-config.yaml            # KNEP proxy configuration
-├── knep-deployment.yaml        # KNEP deployment and service
-├── kic-gateway.yaml            # Kong Gateway and TLS routing
-├── wildcard-tls-secret.yaml    # TLS certificate secret (generated)
-├── generate-wildcard-cert.sh   # Certificate generation script
-├── create-tls-secret.sh        # Alternative TLS secret creation
-├── cluster-issuer.yaml         # Cert-manager cluster issuer
-├── knep-certificate.yaml       # Cert-manager certificate
-├── kong-values.yaml            # Kong Helm values
-└── konnect-secret.yaml         # Konnect configuration template
+k8s-knep/
+├── kafka/              # Kafka cluster configuration
+│   └── kafka-cluster.yaml
+├── knep/               # KNEP proxy components
+│   ├── knep-config.yaml
+│   ├── knep-deployment.yaml
+│   └── konnect-secret.yaml
+├── kong/               # Kong Gateway setup
+│   ├── kic-gateway.yaml
+│   └── kong-values.yaml
+├── certificates/       # TLS certificate management
+│   ├── cluster-issuer.yaml
+│   ├── knep-certificate.yaml
+│   └── tls-secret.yaml
+├── scripts/            # Automation scripts
+│   ├── generate-wildcard-cert.sh
+│   ├── create-tls-secret.sh
+│   ├── kafkactl-helper.sh
+│   └── cleanup.sh
+└── examples/           # Usage examples and configs
+    ├── kafka-client-configs/
+    └── test-commands.md
 ```
 
 ## 🤝 Contributing
