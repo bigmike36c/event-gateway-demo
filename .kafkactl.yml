@@ -8,9 +8,9 @@ contexts:
       - bootstrap.team-a.127-0-0-1.sslip.io:9092
     tls:
       enabled: true
-      insecure: true  # Set to false in production with proper CA
+      insecure: true # Set to false in production with proper CA
     sasl:
-      enabled: false  # Anonymous authentication as configured in KNEP
+      enabled: false # Anonymous authentication as configured in KNEP
     clientID: kafkactl-team-a
     requestTimeout: 10s
     retryBackoff: 100ms
@@ -21,9 +21,9 @@ contexts:
       - bootstrap.team-b.127-0-0-1.sslip.io:9092
     tls:
       enabled: true
-      insecure: true  # Set to false in production with proper CA
+      insecure: true # Set to false in production with proper CA
     sasl:
-      enabled: false  # Anonymous authentication as configured in KNEP
+      enabled: false # Anonymous authentication as configured in KNEP
     clientID: kafkactl-team-b
     requestTimeout: 10s
     retryBackoff: 100ms

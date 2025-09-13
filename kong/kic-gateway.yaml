@@ -4,7 +4,7 @@ kind: GatewayClass
 metadata:
   name: kong
   annotations:
-    konghq.com/gatewayclass-unmanaged: 'true'
+    konghq.com/gatewayclass-unmanaged: "true"
 spec:
   controllerName: konghq.com/kic-gateway-controller
 ---
@@ -16,16 +16,16 @@ metadata:
 spec:
   gatewayClassName: kong
   listeners:
-  - name: proxy
-    port: 80
-    protocol: HTTP
-  - name: stream-9092
-    port: 9092
-    protocol: TLS
-    tls:
-      mode: Passthrough
-      certificateRefs:
-        - name: tls-secret
+    - name: proxy
+      port: 80
+      protocol: HTTP
+    - name: stream-9092
+      port: 9092
+      protocol: TLS
+      tls:
+        mode: Passthrough
+        certificateRefs:
+          - name: tls-secret
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
@@ -37,10 +37,10 @@ spec:
     - name: kong
       sectionName: stream-9092
   hostnames:
-    - "bootstrap.team-a.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
-    - "broker-0.team-a.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
-    - "broker-1.team-a.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
-    - "broker-2.team-a.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
+    - "bootstrap.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-0.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-1.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-2.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
   rules:
     - backendRefs:
         - name: knep-gateway
@@ -57,10 +57,10 @@ spec:
     - name: kong
       sectionName: stream-9092
   hostnames:
-    - "bootstrap.team-b.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
-    - "broker-0.team-b.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
-    - "broker-1.team-b.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
-    - "broker-2.team-b.127-0-0-1.sslip.io"  # Must match the SNI in TLS handshake
+    - "bootstrap.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-0.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-1.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-2.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
   rules:
     - backendRefs:
         - name: knep-gateway
