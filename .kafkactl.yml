@@ -1,30 +1,43 @@
 # kafkactl configuration for Kong Native Event Proxy (KNEP)
-# This configuration provides contexts for connecting to team-a and team-b virtual clusters
+# This configuration provides contexts for connecting to operations, analytics, and partner virtual clusters
 
 contexts:
-  # Team A context - connects via SNI routing with topic prefix 'a-'
-  team-a:
+  # Operations context - connects via SNI routing with topic prefix 'ops-'
+  operations:
     brokers:
-      - bootstrap.team-a.127-0-0-1.sslip.io:9092
+      - bootstrap.operations.127-0-0-1.sslip.io:9092
     tls:
       enabled: true
       insecure: true # Set to false in production with proper CA
     sasl:
       enabled: false # Anonymous authentication as configured in KNEP
-    clientID: kafkactl-team-a
+    clientID: kafkactl-operations
     requestTimeout: 10s
     retryBackoff: 100ms
 
-  # Team B context - connects via SNI routing with topic prefix 'b-'
-  team-b:
+  # Analytics context - connects via SNI routing with topic prefix 'analytics-'
+  analytics:
     brokers:
-      - bootstrap.team-b.127-0-0-1.sslip.io:9092
+      - bootstrap.analytics.127-0-0-1.sslip.io:9092
     tls:
       enabled: true
       insecure: true # Set to false in production with proper CA
     sasl:
       enabled: false # Anonymous authentication as configured in KNEP
-    clientID: kafkactl-team-b
+    clientID: kafkactl-analytics
+    requestTimeout: 10s
+    retryBackoff: 100ms
+
+  # Partner context - connects via SNI routing with topic prefix 'partner-'
+  partner:
+    brokers:
+      - bootstrap.partner.127-0-0-1.sslip.io:9092
+    tls:
+      enabled: true
+      insecure: true # Set to false in production with proper CA
+    sasl:
+      enabled: false # Anonymous authentication as configured in KNEP
+    clientID: kafkactl-partner
     requestTimeout: 10s
     retryBackoff: 100ms
 
@@ -42,7 +55,7 @@ contexts:
     retryBackoff: 100ms
 
 # Default context
-current-context: team-a
+current-context: operations
 
 # Global settings
 defaultPartitions: 3

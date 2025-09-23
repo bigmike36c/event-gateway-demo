@@ -30,17 +30,17 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
-  name: tls-passthrough-route-team-a
+  name: tls-passthrough-route-operations
   namespace: knep
 spec:
   parentRefs:
     - name: kong
       sectionName: stream-9092
   hostnames:
-    - "bootstrap.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
-    - "broker-0.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
-    - "broker-1.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
-    - "broker-2.team-a.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "bootstrap.operations.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-0.operations.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-1.operations.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-2.operations.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
   rules:
     - backendRefs:
         - name: knep-gateway
@@ -50,17 +50,37 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
-  name: tls-passthrough-route-team-b
+  name: tls-passthrough-route-analytics
   namespace: knep
 spec:
   parentRefs:
     - name: kong
       sectionName: stream-9092
   hostnames:
-    - "bootstrap.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
-    - "broker-0.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
-    - "broker-1.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
-    - "broker-2.team-b.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "bootstrap.analytics.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-0.analytics.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-1.analytics.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-2.analytics.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+  rules:
+    - backendRefs:
+        - name: knep-gateway
+          kind: Service
+          port: 9092
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-partner
+  namespace: knep
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9092
+  hostnames:
+    - "bootstrap.partner.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-0.partner.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-1.partner.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
+    - "broker-2.partner.127-0-0-1.sslip.io" # Must match the SNI in TLS handshake
   rules:
     - backendRefs:
         - name: knep-gateway

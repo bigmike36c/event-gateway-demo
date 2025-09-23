@@ -8,15 +8,14 @@ spec:
   renewBefore: 360h
   subject:
     organizations:
-    - knep
-  commonName: '*.127-0-0-1.sslip.io'
+      - knep
+  commonName: "*.127-0-0-1.sslip.io"
   dnsNames:
-  - '*.127-0-0-1.sslip.io'
-  - 127-0-0-1.sslip.io
-  - '*.team-a.127-0-0-1.sslip.io'
-  - team-a.127-0-0-1.sslip.io
-  - '*.team-b.127-0-0-1.sslip.io'
-  - team-b.127-0-0-1.sslip.io
+    - "*.127-0-0-1.sslip.io"
+    - 127-0-0-1.sslip.io
+    - "*.operations.127-0-0-1.sslip.io"
+    - "*.analytics.127-0-0-1.sslip.io"
+    - "*.partner.127-0-0-1.sslip.io"
   issuerRef:
     name: selfsigned-issuer
     kind: ClusterIssuer
