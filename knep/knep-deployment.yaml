@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: knep-gateway
+  namespace: knep
   labels:
     app: knep-gateway
     app.kubernetes.io/part-of: kafka
@@ -24,14 +25,18 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: kong/kong-native-event-proxy-dev:main
-          imagePullPolicy: Always
+          image: kong/kong-native-event-proxy-dev@sha256:6671ff86cd07cb8e603d5e296771f4b7ece8cb1672ce2b74f25815cb268ef0d4
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9092
+            - containerPort: 9094
             - containerPort: 8080
           volumeMounts:
-            - name: tls-secret
-              mountPath: /var/tls
+            - name: internal-tls-secret
+              mountPath: /var/tls/internal
+              readOnly: true
+            - name: external-tls-secret
+              mountPath: /var/tls/external
               readOnly: true
           envFrom:
             - secretRef:
@@ -56,9 +61,12 @@ spec:
               cpu: "500m"
       terminationGracePeriodSeconds: 30
       volumes:
-        - name: tls-secret
+        - name: internal-tls-secret
           secret:
-            secretName: tls-secret
+            secretName: knep-internal-tls-secret
+        - name: external-tls-secret
+          secret:
+            secretName: knep-external-tls-secret
 ---
 apiVersion: v1
 kind: Service
@@ -66,12 +74,17 @@ metadata:
   labels:
     app: knep-gateway
   name: knep-gateway
+  namespace: knep
 spec:
   ports:
-    - name: main
+    - name: internal
       port: 9092
       protocol: TCP
       targetPort: 9092
+    - name: external
+      port: 9094
+      protocol: TCP
+      targetPort: 9094
     - name: health
       port: 8080
       protocol: TCP

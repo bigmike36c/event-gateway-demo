@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafbat-ui
+  namespace: kafka-ui
+  labels:
+    app: kafbat-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafbat-ui
+  template:
+    metadata:
+      labels:
+        app: kafbat-ui
+    spec:
+      containers:
+        - name: kafbat-ui
+          image: ghcr.io/kafbat/kafka-ui:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # Backend Cluster
+            - name: KAFKA_CLUSTERS_0_NAME
+              value: "Backend Cluster"
+            - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+              value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+
+            # Operations Virtual Cluster
+            - name: KAFKA_CLUSTERS_1_NAME
+              value: "Operations Virtual Cluster"
+            - name: KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS
+              value: "bootstrap.operations.svc.cluster.local:9092"
+            - name: KAFKA_CLUSTERS_1_SSL_VERIFYSSL
+              value: "false"
+            - name: KAFKA_CLUSTERS_1_PROPERTIES_SECURITY_PROTOCOL
+              value: "SSL"
+            - name: KAFKA_CLUSTERS_1_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+              value: ""
+            - name: KAFKA_CLUSTERS_1_PROPERTIES_SSL_TRUSTSTORE_LOCATION
+              value: "/etc/ssl/truststore.jks"
+            - name: KAFKA_CLUSTERS_1_PROPERTIES_SSL_TRUSTSTORE_PASSWORD
+              value: "changeit"
+            - name: KAFKA_CLUSTERS_1_PROPERTIES_SSL_TRUSTSTORE_TYPE
+              value: "JKS"
+
+            # Analytics Virtual Cluster
+            - name: KAFKA_CLUSTERS_2_NAME
+              value: "Analytics Virtual Cluster"
+            - name: KAFKA_CLUSTERS_2_BOOTSTRAPSERVERS
+              value: "bootstrap.analytics.svc.cluster.local:9092"
+            - name: KAFKA_CLUSTERS_2_SSL_VERIFYSSL
+              value: "false"
+            - name: KAFKA_CLUSTERS_2_PROPERTIES_SECURITY_PROTOCOL
+              value: "SSL"
+            - name: KAFKA_CLUSTERS_2_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+              value: ""
+            - name: KAFKA_CLUSTERS_2_PROPERTIES_SSL_TRUSTSTORE_LOCATION
+              value: "/etc/ssl/truststore.jks"
+            - name: KAFKA_CLUSTERS_2_PROPERTIES_SSL_TRUSTSTORE_PASSWORD
+              value: "changeit"
+            - name: KAFKA_CLUSTERS_2_PROPERTIES_SSL_TRUSTSTORE_TYPE
+              value: "JKS"
+
+            # Partner Virtual Cluster
+            - name: KAFKA_CLUSTERS_3_NAME
+              value: "Partner Virtual Cluster"
+            - name: KAFKA_CLUSTERS_3_BOOTSTRAPSERVERS
+              value: "bootstrap.partners.svc.cluster.local:9092"
+            - name: KAFKA_CLUSTERS_3_SSL_VERIFYSSL
+              value: "false"
+            - name: KAFKA_CLUSTERS_3_PROPERTIES_SECURITY_PROTOCOL
+              value: "SSL"
+            - name: KAFKA_CLUSTERS_3_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+              value: ""
+            - name: KAFKA_CLUSTERS_3_PROPERTIES_SSL_TRUSTSTORE_LOCATION
+              value: "/etc/ssl/truststore.jks"
+            - name: KAFKA_CLUSTERS_3_PROPERTIES_SSL_TRUSTSTORE_PASSWORD
+              value: "changeit"
+            - name: KAFKA_CLUSTERS_3_PROPERTIES_SSL_TRUSTSTORE_TYPE
+              value: "JKS"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: knep-truststore
+              mountPath: /etc/ssl/truststore.jks
+              subPath: truststore.jks
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: knep-truststore
+          configMap:
+            name: knep-truststore
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafbat-ui
+  namespace: kafka-ui
+  labels:
+    app: kafbat-ui
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: kafbat-ui

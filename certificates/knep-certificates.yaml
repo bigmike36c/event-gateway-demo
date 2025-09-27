@@ -1,0 +1,45 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: knep-internal-certificate
+  namespace: knep
+spec:
+  secretName: knep-internal-tls-secret
+  duration: 2160h
+  renewBefore: 360h
+  subject:
+    organizations:
+      - knep
+  commonName: "*.svc.cluster.local"
+  dnsNames:
+    - "*.svc.cluster.local"
+    - "svc.cluster.local"
+    - "*.operations.svc.cluster.local"
+    - "*.analytics.svc.cluster.local"
+    - "*.partners.svc.cluster.local"
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: knep-external-certificate
+  namespace: knep
+spec:
+  secretName: knep-external-tls-secret
+  duration: 2160h
+  renewBefore: 360h
+  subject:
+    organizations:
+      - knep
+  commonName: "*.127-0-0-1.sslip.io"
+  dnsNames:
+    - "*.127-0-0-1.sslip.io"
+    - "127-0-0-1.sslip.io"
+    - "*.operations.127-0-0-1.sslip.io"
+    - "*.analytics.127-0-0-1.sslip.io"
+    - "*.partners.127-0-0-1.sslip.io"
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer

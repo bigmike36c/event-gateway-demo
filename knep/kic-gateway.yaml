@@ -1,0 +1,91 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: kong
+  annotations:
+    konghq.com/gatewayclass-unmanaged: "true"
+spec:
+  controllerName: konghq.com/kic-gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: kong
+  namespace: knep
+spec:
+  gatewayClassName: kong
+  listeners:
+    - name: proxy
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: stream-9094
+      port: 9094
+      protocol: TLS
+      tls:
+        mode: Passthrough
+        certificateRefs:
+          - name: knep-external-tls-secret
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-operations
+  namespace: knep
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9094
+  hostnames:
+    - "bootstrap.operations.127-0-0-1.sslip.io"
+    - "broker-0.operations.127-0-0-1.sslip.io"
+    - "broker-1.operations.127-0-0-1.sslip.io"
+    - "broker-2.operations.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        - name: knep-gateway
+          kind: Service
+          port: 9094
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-analytics
+  namespace: knep
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9094
+  hostnames:
+    - "bootstrap.analytics.127-0-0-1.sslip.io"
+    - "broker-0.analytics.127-0-0-1.sslip.io"
+    - "broker-1.analytics.127-0-0-1.sslip.io"
+    - "broker-2.analytics.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        - name: knep-gateway
+          kind: Service
+          port: 9094
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-partners
+  namespace: knep
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9094
+  hostnames:
+    - "bootstrap.partners.127-0-0-1.sslip.io"
+    - "broker-0.partners.127-0-0-1.sslip.io"
+    - "broker-1.partners.127-0-0-1.sslip.io"
+    - "broker-2.partners.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        - name: knep-gateway
+          kind: Service
+          port: 9094

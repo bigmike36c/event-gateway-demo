@@ -5,7 +5,7 @@ contexts:
   # Operations context - connects via SNI routing with topic prefix 'ops-'
   operations:
     brokers:
-      - bootstrap.operations.127-0-0-1.sslip.io:9092
+      - bootstrap.operations.127-0-0-1.sslip.io:9094
     tls:
       enabled: true
       insecure: true # Set to false in production with proper CA
@@ -18,7 +18,7 @@ contexts:
   # Analytics context - connects via SNI routing with topic prefix 'analytics-'
   analytics:
     brokers:
-      - bootstrap.analytics.127-0-0-1.sslip.io:9092
+      - bootstrap.analytics.127-0-0-1.sslip.io:9094
     tls:
       enabled: true
       insecure: true # Set to false in production with proper CA
@@ -29,9 +29,9 @@ contexts:
     retryBackoff: 100ms
 
   # Partner context - connects via SNI routing with topic prefix 'partner-'
-  partner:
+  partners:
     brokers:
-      - bootstrap.partner.127-0-0-1.sslip.io:9092
+      - bootstrap.partners.127-0-0-1.sslip.io:9094
     tls:
       enabled: true
       insecure: true # Set to false in production with proper CA

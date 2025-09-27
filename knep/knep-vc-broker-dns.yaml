@@ -1,0 +1,161 @@
+# Operations Virtual Cluster Broker DNS
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: operations
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bootstrap
+  namespace: operations
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-0
+  namespace: operations
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-1
+  namespace: operations
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-2
+  namespace: operations
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+# Analytics Virtual Cluster Broker DNS
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: analytics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bootstrap
+  namespace: analytics
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-0
+  namespace: analytics
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-1
+  namespace: analytics
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-2
+  namespace: analytics
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+# Partners Virtual Cluster Broker DNS
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: partners
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bootstrap
+  namespace: partners
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-0
+  namespace: partners
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-1
+  namespace: partners
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-2
+  namespace: partners
+spec:
+  type: ExternalName
+  externalName: knep-gateway.knep.svc.cluster.local
+  ports:
+    - port: 9092
+      protocol: TCP
