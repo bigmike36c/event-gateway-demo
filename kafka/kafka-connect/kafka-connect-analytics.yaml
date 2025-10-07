@@ -1,0 +1,48 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: kafka-connect-analytics
+  namespace: kafka
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.9.0
+  replicas: 1
+  bootstrapServers: bootstrap.analytics.svc.cluster.local:9092
+  image: docker.io/mfieldkong/strimzi-connect:3.9.0-datagen-0.6.7-hotfix1
+  config:
+    group.id: analytics-connect-group
+    config.storage.topic: connect-configs
+    config.storage.replication.factor: 3
+    offset.storage.topic: connect-offsets
+    offset.storage.replication.factor: 3
+    status.storage.topic: connect-status
+    status.storage.replication.factor: 3
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: "false"
+    offset.flush.interval.ms: 10000
+  tls:
+    trustedCertificates:
+      - secretName: connect-internal-tls-secret
+        certificate: ca.crt
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 200m
+    limits:
+      memory: 2Gi
+      cpu: 500m
+  jvmOptions:
+    "-Xmx": "1g"
+    "-Xms": "512m"
+  template:
+    pod:
+      volumes:
+        - name: schemas
+          configMap:
+            name: schemas
+    connectContainer:
+      volumeMounts:
+        - name: schemas
+          mountPath: /mnt/schemas
