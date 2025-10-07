@@ -1,4 +1,4 @@
-# kafkactl configuration for Kong Native Event Proxy (KNEP)
+# kafkactl configuration for Kong Event Gateway (KEG)
 # This configuration provides contexts for connecting to operations, analytics, and partner virtual clusters
 
 contexts:
@@ -10,7 +10,7 @@ contexts:
       enabled: true
       insecure: true # Set to false in production with proper CA
     sasl:
-      enabled: false # Anonymous authentication as configured in KNEP
+      enabled: false # Anonymous authentication as configured in KEG
     clientID: kafkactl-operations
     requestTimeout: 10s
     retryBackoff: 100ms
@@ -23,7 +23,7 @@ contexts:
       enabled: true
       insecure: true # Set to false in production with proper CA
     sasl:
-      enabled: false # Anonymous authentication as configured in KNEP
+      enabled: false # Anonymous authentication as configured in KEG
     clientID: kafkactl-analytics
     requestTimeout: 10s
     retryBackoff: 100ms
@@ -36,7 +36,7 @@ contexts:
       enabled: true
       insecure: true # Set to false in production with proper CA
     sasl:
-      enabled: false # Anonymous authentication as configured in KNEP
+      enabled: false # Anonymous authentication as configured in KEG
     clientID: kafkactl-partner
     requestTimeout: 10s
     retryBackoff: 100ms

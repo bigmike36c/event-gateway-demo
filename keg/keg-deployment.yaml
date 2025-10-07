@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: knep-gateway
-  namespace: knep
+  name: kong-event-gateway
+  namespace: keg
   labels:
-    app: knep-gateway
+    app: kong-event-gateway
     app.kubernetes.io/part-of: kafka
-    app.kubernetes.io/name: knep-gateway
+    app.kubernetes.io/name: kong-event-gateway
     app.kubernetes.io/component: integration
     app.openshift.io/runtime: rust
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: knep-gateway
+      app: kong-event-gateway
   template:
     metadata:
       labels:
-        app: knep-gateway
+        app: kong-event-gateway
       annotations:
         k8s.grafana.com/scrape: "true"
         k8s.grafana.com/metrics.path: "/health/metrics"
@@ -63,18 +63,18 @@ spec:
       volumes:
         - name: internal-tls-secret
           secret:
-            secretName: knep-internal-tls-secret
+            secretName: keg-internal-tls-secret
         - name: external-tls-secret
           secret:
-            secretName: knep-external-tls-secret
+            secretName: keg-external-tls-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: knep-gateway
-  name: knep-gateway
-  namespace: knep
+    app: kong-event-gateway
+  name: kong-event-gateway
+  namespace: keg
 spec:
   ports:
     - name: internal
@@ -90,7 +90,7 @@ spec:
       protocol: TCP
       targetPort: 8080
   selector:
-    app: knep-gateway
+    app: kong-event-gateway
   type: ClusterIP
 ---
 

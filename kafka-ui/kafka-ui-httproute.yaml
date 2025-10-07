@@ -7,13 +7,13 @@ spec:
   parentRefs:
     - name: kong
       sectionName: proxy
-      namespace: knep
+      namespace: keg
   rules:
     - matches:
         - path:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: kafbat-ui
+        - name: kafka-ui
           namespace: kafka-ui
           port: 8080

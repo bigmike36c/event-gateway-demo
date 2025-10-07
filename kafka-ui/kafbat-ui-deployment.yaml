@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafbat-ui
+  name: kafka-ui
   namespace: kafka-ui
   labels:
-    app: kafbat-ui
+    app: kafka-ui
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafbat-ui
+      app: kafka-ui
   template:
     metadata:
       labels:
-        app: kafbat-ui
+        app: kafka-ui
     spec:
       containers:
-        - name: kafbat-ui
+        - name: kafka-ui
           image: ghcr.io/kafbat/kafka-ui:latest
           ports:
             - containerPort: 8080
@@ -106,10 +106,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafbat-ui
+  name: kafka-ui
   namespace: kafka-ui
   labels:
-    app: kafbat-ui
+    app: kafka-ui
 spec:
   type: ClusterIP
   ports:
@@ -117,4 +117,4 @@ spec:
       targetPort: 8080
       protocol: TCP
   selector:
-    app: kafbat-ui
+    app: kafka-ui

@@ -12,7 +12,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: kong
-  namespace: knep
+  namespace: keg
 spec:
   gatewayClassName: kong
   listeners:
@@ -28,13 +28,13 @@ spec:
       tls:
         mode: Passthrough
         certificateRefs:
-          - name: knep-external-tls-secret
+          - name: keg-external-tls-secret
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
   name: tls-passthrough-route-operations
-  namespace: knep
+  namespace: keg
 spec:
   parentRefs:
     - name: kong
@@ -46,7 +46,7 @@ spec:
     - "broker-2.operations.127-0-0-1.sslip.io"
   rules:
     - backendRefs:
-        - name: knep-gateway
+        - name: kong-event-gateway
           kind: Service
           port: 9094
 ---
@@ -54,7 +54,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
   name: tls-passthrough-route-analytics
-  namespace: knep
+  namespace: keg
 spec:
   parentRefs:
     - name: kong
@@ -66,7 +66,7 @@ spec:
     - "broker-2.analytics.127-0-0-1.sslip.io"
   rules:
     - backendRefs:
-        - name: knep-gateway
+        - name: kong-event-gateway
           kind: Service
           port: 9094
 ---
@@ -74,7 +74,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
   name: tls-passthrough-route-partners
-  namespace: knep
+  namespace: keg
 spec:
   parentRefs:
     - name: kong
@@ -86,6 +86,6 @@ spec:
     - "broker-2.partners.127-0-0-1.sslip.io"
   rules:
     - backendRefs:
-        - name: knep-gateway
+        - name: kong-event-gateway
           kind: Service
           port: 9094
