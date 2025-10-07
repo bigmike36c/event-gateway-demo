@@ -18,7 +18,55 @@ spec:
     - "*.analytics.svc.cluster.local"
     - "*.partners.svc.cluster.local"
   issuerRef:
-    name: selfsigned-issuer
+    name: internal-ca
+    kind: ClusterIssuer
+---
+# Internal cert signed by same CA but for kafka namespace
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: connect-internal-certificate
+  namespace: kafka
+spec:
+  secretName: connect-internal-tls-secret
+  duration: 2160h
+  renewBefore: 360h
+  subject:
+    organizations:
+      - knep
+  commonName: "*.svc.cluster.local"
+  dnsNames:
+    - "*.svc.cluster.local"
+    - "svc.cluster.local"
+    - "*.operations.svc.cluster.local"
+    - "*.analytics.svc.cluster.local"
+    - "*.partners.svc.cluster.local"
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer
+---
+# Internal cert signed by same CA but for kafka-ui namespace
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kafka-ui-internal-certificate
+  namespace: kafka-ui
+spec:
+  secretName: kafka-ui-internal-tls-secret
+  duration: 2160h
+  renewBefore: 360h
+  subject:
+    organizations:
+      - knep
+  commonName: "*.svc.cluster.local"
+  dnsNames:
+    - "*.svc.cluster.local"
+    - "svc.cluster.local"
+    - "*.operations.svc.cluster.local"
+    - "*.analytics.svc.cluster.local"
+    - "*.partners.svc.cluster.local"
+  issuerRef:
+    name: internal-ca
     kind: ClusterIssuer
 ---
 apiVersion: cert-manager.io/v1
@@ -41,5 +89,5 @@ spec:
     - "*.analytics.127-0-0-1.sslip.io"
     - "*.partners.127-0-0-1.sslip.io"
   issuerRef:
-    name: selfsigned-issuer
+    name: internal-ca
     kind: ClusterIssuer
