@@ -15,6 +15,16 @@ spec:
       - id: 0
         type: ephemeral
         kraftMetadata: shared
+  resources:
+    requests:
+      memory: 768Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 400m
+  jvmOptions:
+    "-Xmx": "384m"
+    "-Xms": "384m"
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
@@ -42,5 +52,19 @@ spec:
       default.replication.factor: 3
       min.insync.replicas: 2
   entityOperator:
-    topicOperator: {}
-    userOperator: {}
+    topicOperator:
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
+          cpu: 200m
+    userOperator:
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
+          cpu: 200m

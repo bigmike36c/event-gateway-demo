@@ -11,6 +11,13 @@ controller:
       controlPlaneID: "c2ef4cf3-bda4-43f5-81a2-251c2ff056ef"
       tlsClientCertSecretName: konnect-client-tls
       apiHostname: "us.kic.api.konghq.com"
+    resources:
+      requests:
+        memory: "0.25Gi"
+        cpu: "100m"
+      limits:
+        memory: "0.5Gi"
+        cpu: "250m"
 
 gateway:
   image:
@@ -32,8 +39,11 @@ gateway:
     dns_stale_ttl: "3600"
   resources:
     requests:
-      cpu: 1
-      memory: "2Gi"
+      memory: 0.5Gi
+      cpu: 500m
+    limits:
+      memory: 1.5Gi
+      cpu: 1000m
   secretVolumes:
     - konnect-client-tls
   manager:

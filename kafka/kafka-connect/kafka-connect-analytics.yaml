@@ -28,13 +28,13 @@ spec:
         certificate: ca.crt
   resources:
     requests:
-      memory: 1Gi
-      cpu: 200m
+      memory: 768Mi
+      cpu: 250m
     limits:
-      memory: 2Gi
-      cpu: 500m
+      memory: 1Gi
+      cpu: 400m
   jvmOptions:
-    "-Xmx": "1g"
+    "-Xmx": "512m"
     "-Xms": "512m"
   template:
     pod:
