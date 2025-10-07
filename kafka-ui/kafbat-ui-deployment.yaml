@@ -25,7 +25,7 @@ spec:
             - name: KAFKA_CLUSTERS_0_NAME
               value: "Backend Cluster"
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+              value: "backend-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
 
             # Operations Virtual Cluster
             - name: KAFKA_CLUSTERS_1_NAME
