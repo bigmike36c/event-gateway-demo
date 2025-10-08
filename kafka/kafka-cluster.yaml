@@ -2,6 +2,7 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
 metadata:
   name: broker
+  namespace: kafka
   labels:
     strimzi.io/cluster: backend-cluster
 spec:
@@ -30,6 +31,7 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: backend-cluster
+  namespace: kafka
   annotations:
     strimzi.io/node-pools: enabled
     strimzi.io/kraft: enabled
