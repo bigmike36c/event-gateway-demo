@@ -36,13 +36,3 @@ spec:
   jvmOptions:
     "-Xmx": "512m"
     "-Xms": "512m"
-  template:
-    pod:
-      volumes:
-        - name: schemas
-          configMap:
-            name: schemas
-    connectContainer:
-      volumeMounts:
-        - name: schemas
-          mountPath: /mnt/schemas

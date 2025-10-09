@@ -1,0 +1,71 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: datagen-vehicle-gps
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-connect-operations
+spec:
+  class: io.confluent.kafka.connect.datagen.DatagenConnector
+  tasksMax: 1
+  config:
+    kafka.topic: vehicle-tracking
+    schema.keyfield: vehicleId
+    max.interval: 500
+    iterations: -1
+    schema.string: |-
+      {
+        "type": "record",
+        "name": "vehicle_gps",
+        "fields": [
+          {
+            "name": "vehicleId",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["TRK-4521","TRK-4522","TRK-4523","TRK-4524","TRK-4525","TRK-4526","TRK-4527","TRK-4528","TRK-4529","TRK-4530"]
+              }
+            }
+          },
+          {
+            "name": "lat",
+            "type": {
+              "type": "double",
+              "arg.properties": {
+                "range": {"min": 40.6, "max": 40.8}
+              }
+            }
+          },
+          {
+            "name": "lon",
+            "type": {
+              "type": "double",
+              "arg.properties": {
+                "range": {"min": -74.1, "max": -73.9}
+              }
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["EN_ROUTE","IDLE","DELIVERING","RETURNING"]
+              }
+            }
+          },
+          {
+            "name": "nextStop",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "regex": "CUST-[0-9]{4}"
+              }
+            }
+          },
+          {
+            "name": "estimatedArrival",
+            "type": "long"
+          }
+        ]
+      }

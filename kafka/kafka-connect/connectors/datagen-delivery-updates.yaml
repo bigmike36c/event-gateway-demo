@@ -1,0 +1,53 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: datagen-delivery-updates
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-connect-operations
+spec:
+  class: io.confluent.kafka.connect.datagen.DatagenConnector
+  tasksMax: 1
+  config:
+    kafka.topic: delivery-updates
+    schema.keyfield: deliveryId
+    max.interval: 3000
+    iterations: -1
+    schema.string: |-
+      {
+        "type": "record",
+        "name": "delivery_updates",
+        "fields": [
+          {
+            "name": "deliveryId",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "regex": "DEL-[0-9]{4}"
+              }
+            }
+          },
+          {
+            "name": "trackingNumber",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "regex": "1Z999AA[0-9]{10}"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["PICKED_UP","IN_TRANSIT","OUT_FOR_DELIVERY","DELIVERED","DELIVERY_ATTEMPTED"]
+              }
+            }
+          },
+          {
+            "name": "estimatedDelivery",
+            "type": "long"
+          }
+        ]
+      }

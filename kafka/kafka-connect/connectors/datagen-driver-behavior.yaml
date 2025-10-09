@@ -1,0 +1,76 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: datagen-driver-behavior
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-connect-analytics
+spec:
+  class: io.confluent.kafka.connect.datagen.DatagenConnector
+  tasksMax: 1
+  config:
+    kafka.topic: driver-behavior
+    schema.keyfield: driverId
+    max.interval: 1000
+    iterations: -1
+    schema.string: |-
+      {
+        "type": "record",
+        "name": "driver_behavior",
+        "fields": [
+          {
+            "name": "driverId",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["DRV-781","DRV-782","DRV-783","DRV-784","DRV-785"]
+              }
+            }
+          },
+          {
+            "name": "vehicleId",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["TRK-4521","TRK-4522","TRK-4523","TRK-4524","TRK-4525","TRK-4526","TRK-4527","TRK-4528","TRK-4529","TRK-4530"]
+              }
+            }
+          },
+          {
+            "name": "hardBrakes",
+            "type": {
+              "type": "int",
+              "arg.properties": {
+                "range": {"min": 0, "max": 5}
+              }
+            }
+          },
+          {
+            "name": "rapidAccel",
+            "type": {
+              "type": "int",
+              "arg.properties": {
+                "range": {"min": 0, "max": 3}
+              }
+            }
+          },
+          {
+            "name": "sharpTurns",
+            "type": {
+              "type": "int",
+              "arg.properties": {
+                "range": {"min": 0, "max": 4}
+              }
+            }
+          },
+          {
+            "name": "safetyScore",
+            "type": {
+              "type": "int",
+              "arg.properties": {
+                "range": {"min": 70, "max": 100}
+              }
+            }
+          }
+        ]
+      }

@@ -1,0 +1,68 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: datagen-engine-diagnostics
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-connect-operations
+spec:
+  class: io.confluent.kafka.connect.datagen.DatagenConnector
+  tasksMax: 1
+  config:
+    kafka.topic: engine-diagnostics
+    schema.keyfield: vehicleId
+    max.interval: 3000
+    iterations: -1
+    schema.string: |-
+      {
+        "type": "record",
+        "name": "engine_diagnostics",
+        "fields": [
+          {
+            "name": "vehicleId",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["TRK-4521","TRK-4522","TRK-4523","TRK-4524","TRK-4525","TRK-4526","TRK-4527","TRK-4528","TRK-4529","TRK-4530"]
+              }
+            }
+          },
+          {
+            "name": "engineTemp",
+            "type": {
+              "type": "int",
+              "arg.properties": {
+                "range": {"min": 180, "max": 220}
+              }
+            }
+          },
+          {
+            "name": "fuelLevel",
+            "type": {
+              "type": "int",
+              "arg.properties": {
+                "range": {"min": 10, "max": 100}
+              }
+            }
+          },
+          {
+            "name": "alertLevel",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["NORMAL","WARNING","CRITICAL"],
+                "weights": [80,15,5]
+              }
+            }
+          },
+          {
+            "name": "message",
+            "type": {
+              "type": "string",
+              "arg.properties": {
+                "options": ["All systems normal","Schedule maintenance soon","Check engine immediately","Low fuel warning"]
+              }
+            }
+          }
+        ]
+      }
