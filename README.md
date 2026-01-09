@@ -13,18 +13,6 @@ Observability is provided through OpenTelemetry, with traces exported to Jaeger 
 
 All external access (including accessing the Kafka UI) requires utilizing the deployed loadbalancer service. Cloud deployments may require additional configuration to route traffic to the loadbalancer service. Local deployments will depend on the type of k8s cluster but tools like `minikube` can utilize `sudo minikube tunnel -p <your-profile-name>` to expose the loadbalancer service.
 
-## 🔗 Links to access the demo environment
-
-Once deployed, the following services are accessible via the loadbalancer:
-
-| Service        | URL                                                                    | Description                                                         |
-| -------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **Kafka UI**   | `http://<loadbalancer-ip>` or `http://localhost:80`                    | Web interface for managing and monitoring Kafka clusters and topics |
-| **Jaeger**     | `http://<loadbalancer-ip>/jaeger` or `http://localhost/jaeger`         | Distributed tracing UI for viewing request traces                   |
-| **Prometheus** | `http://<loadbalancer-ip>/prometheus` or `http://localhost/prometheus` | Metrics querying and visualization UI                               |
-
-> **Note**: Replace `<loadbalancer-ip>` with your actual loadbalancer IP address. For local deployments using `localhost`, ensure the loadbalancer service is properly exposed (e.g., using `minikube tunnel`).
-
 ## 📋 Prerequisites
 
 - Kubernetes cluster (1.24+)
@@ -318,6 +306,137 @@ The `OTEL_SERVICE_NAME` environment variable (set to `keg`) identifies the servi
 ### 10. Ensure loadbalancer service is accessible
 
 If running locally, ensure the loadbalancer service is accessible. Cloud deployments may require additional configuration to route traffic to the loadbalancer service. Local deployments will depend on the type of k8s cluster but tools like `minikube` can utilize `sudo minikube tunnel -p <your-profile-name>` to expose the loadbalancer service.
+
+## 🔗 Accessing the Demo Environment
+
+Once deployed, ensure your LoadBalancer service is accessible:
+
+**For minikube, you must first run the following command to expose the loadbalancer service:**
+
+```bash
+# Run in a separate terminal (requires sudo)
+sudo minikube tunnel -p <your-profile-name>
+```
+
+**Verify LoadBalancer IP:**
+
+```bash
+kubectl get svc kong-gateway-proxy -n kic -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+> **Note**: For minikube, the LoadBalancer IP will be `127.0.0.1`. Cloud deployments will show their external IP address.
+
+### Links to Available Services
+
+| Service          | URL/Filename                          | Description                                                                                                           |
+| ---------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Kafka UI** ⭐  | `http://<loadbalancer-ip>`            | **Primary interface** for accessing Kafka clusters, viewing topics, producing/consuming messages                      |
+| **Jaeger**       | `http://<loadbalancer-ip>/jaeger`     | Distributed tracing UI for viewing request traces through the Event Gateway                                           |
+| **Prometheus**   | `http://<loadbalancer-ip>/prometheus` | Metrics querying and visualization UI for Event Gateway and Kafka metrics                                             |
+| **kafkactl CLI** | [`.kafkactl.yml`](.kafkactl.yml)      | Configuration for external CLI access. See [Accessing Kafka via CLI](#accessing-kafka-via-cli) below for more details |
+
+> **Note**: Replace `<loadbalancer-ip>` with your actual loadbalancer IP address. For local deployments using `localhost`, ensure the loadbalancer service is properly exposed (e.g., using `minikube tunnel`).
+
+### Accessing Kafka Through the Web UI
+
+The **Kafka UI** provides a user-friendly web interface for interacting with your Kafka clusters.
+
+**Access the UI:**
+
+- Navigate to `http://localhost` (minikube) or `http://<loadbalancer-ip>`
+
+**Features:**
+
+- 📊 View and manage topics across all virtual clusters
+- 📝 Produce and consume messages interactively
+- 🔍 Browse consumer groups and monitor lag
+- ⚙️ View broker configurations and cluster health
+
+The Kafka UI is pre-configured to connect to all three virtual clusters (operations, analytics, partners) through the Event Gateway.
+
+### Accessing Kafka via CLI
+
+For programmatic access or automation, use the `kafkactl` CLI tool with the provided [`.kafkactl.yml`](.kafkactl.yml) configuration.
+
+#### For Minikube (Local Development)
+
+The default configuration uses `127-0-0-1.sslip.io` which works out-of-the-box:
+
+```bash
+# Test connection
+kafkactl get topics --context operations
+```
+
+#### For Cloud or Remote Kubernetes Clusters
+
+**Option 1: Using sslip.io (Recommended)**
+
+1. **Get your LoadBalancer external IP:**
+
+```bash
+   kubectl get svc kong-gateway-proxy -n kic -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+Example output: `35.123.45.67`
+
+2. **Update `.kafkactl.yml`** - Replace `127-0-0-1` with your LoadBalancer IP (using dashes):
+
+```yaml
+# Example: If LoadBalancer IP is 35.123.45.67
+operations:
+  brokers:
+    - bootstrap.operations.35-123-45-67.sslip.io:9094
+
+analytics:
+  brokers:
+    - bootstrap.analytics.35-123-45-67.sslip.io:9094
+
+partners:
+  brokers:
+    - bootstrap.partners.35-123-45-67.sslip.io:9094
+```
+
+3. **Test the connection:**
+
+```bash
+   kafkactl get topics --context operations
+```
+
+**How it works:** The [sslip.io](https://sslip.io) service automatically resolves hostnames like `35-123-45-67.sslip.io` to `35.123.45.67`. The subdomain prefix (e.g., `bootstrap.operations`) is used by Kong for SNI-based routing to the correct virtual cluster. No DNS configuration is required.
+
+**Option 2: Using Your Own Domain**
+
+If you have your own domain and DNS:
+
+1. **Create DNS A records** pointing to your LoadBalancer IP:
+
+```
+   bootstrap.operations.kafka.yourdomain.com  →  35.123.45.67
+   bootstrap.analytics.kafka.yourdomain.com   →  35.123.45.67
+   bootstrap.partners.kafka.yourdomain.com    →  35.123.45.67
+```
+
+2. **Update `.kafkactl.yml`** with your custom hostnames:
+
+```yaml
+operations:
+  brokers:
+    - bootstrap.operations.kafka.yourdomain.com:9094
+
+analytics:
+  brokers:
+    - bootstrap.analytics.kafka.yourdomain.com:9094
+
+partners:
+  brokers:
+    - bootstrap.partners.kafka.yourdomain.com:9094
+```
+
+> **Note**: The hostname prefixes (e.g., `bootstrap.operations`, `bootstrap.analytics`, `bootstrap.partners`) must be preserved as they are used for SNI routing by the Kong Event Gateway to direct traffic to the appropriate virtual cluster.
+
+### Using Other Kafka Clients
+
+You can use any Kafka-compatible client with the same broker addresses and TLS settings as defined in `.kafkactl.yml`.
 
 ## 🏗️ Architecture
 
