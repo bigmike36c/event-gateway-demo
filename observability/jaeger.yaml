@@ -10,7 +10,7 @@ spec:
   resources:
     requests:
       storage: 10Gi # Request 10GB of disk space - adjust based on trace volume
-  # storageClassName: standard  # Uncomment if you need a specific storage class
+  # storageClassName: standard # Uncomment and set to a compatible storage class for your k8s cluster if needed
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -303,6 +303,56 @@ Key metrics available include:
 
 The `OTEL_SERVICE_NAME` environment variable (set to `keg`) identifies the service name in traces and metrics, making it easier to filter and identify Event Gateway data in observability tools.
 
+#### Troubleshooting Jaeger Pod
+
+**Symptom:** Jaeger pod stuck in `Pending` state or PVC fails to bind
+
+**Cause:** Storage class incompatibility with your cluster's node type.
+
+When you don't specify a `storageClassName`, Kubernetes automatically uses the cluster's default storage class. This default varies by platform and is usually compatible with most node types. However, there are edge cases where the default storage class is incompatible with specific machine types.
+
+**Example:** On GKE, the default storage class often uses `pd-balanced` disks, which work with most modern machine types (n2, n2d, c3, etc.) but are **not compatible** with c4 compute-optimized machines. In this case, you need to explicitly specify a compatible storage class like `pd-standard`.
+
+**Solution:**
+
+1. **Check your cluster's available storage classes:**
+
+```bash
+   kubectl get storageclass
+```
+
+Look for the one marked `(default)` and verify if it's compatible with your node types.
+
+2. **Set a compatible storage class** in `observability/jaeger.yaml`:
+
+   Find the PersistentVolumeClaim section and uncomment the `storageClassName` line:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jaeger-badger-pvc
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard # ← Uncomment and set to a compatible storage class
+```
+
+Replace `standard` with the appropriate storage class name for your platform.
+
+3. **Apply the changes:**
+
+```bash
+   kubectl delete pvc jaeger-badger-pvc -n observability
+   kubectl apply -f observability/jaeger.yaml
+```
+
+> **Tip:** Consult your cloud provider's documentation to find compatible storage classes for your specific node/machine types.
+
 ### 10. Ensure loadbalancer service is accessible
 
 If running locally, ensure the loadbalancer service is accessible. Cloud deployments may require additional configuration to route traffic to the loadbalancer service. Local deployments will depend on the type of k8s cluster but tools like `minikube` can utilize `sudo minikube tunnel -p <your-profile-name>` to expose the loadbalancer service.
