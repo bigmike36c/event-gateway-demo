@@ -518,33 +518,39 @@ You can use any Kafka-compatible client with the same broker addresses and TLS s
 
 ### Direct Backend Kafka Access (Bypassing KEG)
 
-A direct access route to the backend Kafka cluster is deployed by default in `kic/kic-gateway.yaml`. This route bypasses KEG and connects directly to the backend Kafka cluster's TLS listener (port 9093), which is useful for troubleshooting to isolate whether issues are with KEG or the backend Kafka cluster.
+For troubleshooting, you can access the backend Kafka cluster directly without going through KEG using Kubernetes port-forwarding. This helps isolate whether issues are with KEG or the backend Kafka cluster.
 
-**Access hostnames:**
-
-- Local/minikube: `direct.backend.127-0-0-1.sslip.io:9094`
-- Cloud: Replace `127-0-0-1` with your LoadBalancer IP (e.g., `direct.backend.35-123-45-67.sslip.io:9094`)
-
-**Example using kafkactl:**
-
-Add this context to your `.kafkactl.yml`:
-
-```yaml
-direct-backend:
-  brokers:
-    - direct.backend.127-0-0-1.sslip.io:9094
-  tls:
-    enabled: true
-    insecure: true
-```
-
-Then test:
+**Step 1: Start port-forwarding (in a separate terminal):**
 
 ```bash
-kafkactl get topics --context direct-backend
+kubectl port-forward svc/backend-cluster-kafka-bootstrap 9092:9092 -n kafka
 ```
 
-> **Note:** This bypasses KEG's virtual cluster routing, so you'll see the actual backend topic names (with prefixes like `operations-`, `analytics-`, `partners-`).
+**Step 2: Use kafkactl to connect:**
+
+The `.kafkactl.yml` file already has a `kafka-direct` context configured for this:
+
+```bash
+kafkactl get topics --context kafka-direct
+```
+
+**What you'll see:**
+- Backend topic names **with prefixes** (e.g., `operations-vehicle-gps`, `analytics-fleet-telemetry`, `partners-delivery-updates`)
+- This confirms KEG's topic prefixing is working correctly
+- You can produce/consume directly to verify backend Kafka functionality
+
+**Example commands:**
+
+```bash
+# List all backend topics (with prefixes)
+kafkactl get topics --context kafka-direct
+
+# Consume from a prefixed topic
+kafkactl consume operations-vehicle-gps --context kafka-direct
+
+# Produce to a prefixed topic
+echo "test message" | kafkactl produce operations-vehicle-gps --context kafka-direct
+```
 
 ### Jaeger Pod Issues
 

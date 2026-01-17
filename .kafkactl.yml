@@ -42,14 +42,13 @@ contexts:
     retryBackoff: 100ms
 
   # Direct backend Kafka access (bypasses KEG - for troubleshooting)
-  # Routes directly to backend Kafka cluster via KIC TLSRoute
+  # Requires port-forwarding: kubectl port-forward svc/backend-cluster-kafka-bootstrap 9092:9092 -n kafka
   # Shows actual backend topic names with prefixes (operations-, analytics-, partners-)
   kafka-direct:
     brokers:
-      - direct.backend.127-0-0-1.sslip.io:9094
+      - localhost:9092
     tls:
-      enabled: true
-      insecure: true # Backend uses self-signed certs
+      enabled: false
     sasl:
       enabled: false
     clientID: kafkactl-direct

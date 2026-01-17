@@ -90,32 +90,77 @@ spec:
           kind: Service
           port: 9094
 ---
-# Direct Kafka Backend Access Route (For Troubleshooting)
-# This bypasses KEG and routes directly to the backend Kafka cluster's TLS listener
-# Use this to verify backend Kafka connectivity independent of KEG
-# See the Troubleshooting section in README for usage details
+# Direct Kafka Backend Access Routes (For Troubleshooting)
+# Routes to the external listener (cluster-ip type) with custom advertised addresses
+# Strimzi creates: backend-cluster-kafka-external-bootstrap and backend-cluster-broker-external-* services
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
-  name: tls-passthrough-route-direct-backend
-  namespace: kafka
+  name: tls-passthrough-route-direct-backend-bootstrap
+  namespace: keg
 spec:
   parentRefs:
     - name: kong
-      namespace: keg
       sectionName: stream-9094
   hostnames:
-    # Direct access hostnames - use these for troubleshooting backend Kafka
-    # For local/minikube: direct.backend.127-0-0-1.sslip.io:9094
-    # For cloud: Replace 127-0-0-1 with your LoadBalancer IP (e.g., 35-123-45-67)
     - "direct.backend.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        - name: backend-cluster-kafka-external-bootstrap
+          namespace: kafka
+          kind: Service
+          port: 9095
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-direct-backend-0
+  namespace: keg
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9094
+  hostnames:
     - "broker-0.direct.backend.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        - name: backend-cluster-broker-external-0
+          namespace: kafka
+          kind: Service
+          port: 9095
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-direct-backend-1
+  namespace: keg
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9094
+  hostnames:
     - "broker-1.direct.backend.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        - name: backend-cluster-broker-external-1
+          namespace: kafka
+          kind: Service
+          port: 9095
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-direct-backend-2
+  namespace: keg
+spec:
+  parentRefs:
+    - name: kong
+      sectionName: stream-9094
+  hostnames:
     - "broker-2.direct.backend.127-0-0-1.sslip.io"
   rules:
     - backendRefs:
-        # Route directly to backend Kafka TLS listener (port 9093)
-        - name: backend-cluster-kafka-bootstrap
+        - name: backend-cluster-broker-external-2
           namespace: kafka
           kind: Service
-          port: 9093
+          port: 9095
