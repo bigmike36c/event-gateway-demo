@@ -89,3 +89,33 @@ spec:
         - name: kong-event-gateway
           kind: Service
           port: 9094
+---
+# Direct Kafka Backend Access Route (For Troubleshooting)
+# This bypasses KEG and routes directly to the backend Kafka cluster's TLS listener
+# Use this to verify backend Kafka connectivity independent of KEG
+# See the Troubleshooting section in README for usage details
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls-passthrough-route-direct-backend
+  namespace: kafka
+spec:
+  parentRefs:
+    - name: kong
+      namespace: keg
+      sectionName: stream-9094
+  hostnames:
+    # Direct access hostnames - use these for troubleshooting backend Kafka
+    # For local/minikube: direct.backend.127-0-0-1.sslip.io:9094
+    # For cloud: Replace 127-0-0-1 with your LoadBalancer IP (e.g., 35-123-45-67)
+    - "direct.backend.127-0-0-1.sslip.io"
+    - "broker-0.direct.backend.127-0-0-1.sslip.io"
+    - "broker-1.direct.backend.127-0-0-1.sslip.io"
+    - "broker-2.direct.backend.127-0-0-1.sslip.io"
+  rules:
+    - backendRefs:
+        # Route directly to backend Kafka TLS listener (port 9093)
+        - name: backend-cluster-kafka-bootstrap
+          namespace: kafka
+          kind: Service
+          port: 9093
