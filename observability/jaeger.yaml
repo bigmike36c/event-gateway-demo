@@ -109,6 +109,18 @@ spec:
       labels:
         app: jaeger
     spec:
+      initContainers:
+        - name: configure-badger-storage-permissions
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "mkdir -p /badger/key /badger/data && chown -R 10001:10001 /badger",
+            ]
+          volumeMounts:
+            - name: badger-data
+              mountPath: /badger
       containers:
         - name: jaeger
           image: jaegertracing/jaeger:2.12.0
