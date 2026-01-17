@@ -245,6 +245,60 @@ helm install kong kong/ingress -n kic \
 kubectl apply -f kic/kic-gateway.yaml
 ```
 
+#### Configuring SNI Routing for Cloud Deployments
+
+The default configuration uses `127-0-0-1.sslip.io` which works for local/minikube deployments. For cloud deployments with a real LoadBalancer IP, you need to update the SNI hostnames in two places:
+
+**Step 1: Get your LoadBalancer IP**
+
+```bash
+kubectl get svc kong-gateway-proxy -n kic -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+Example output: `35.123.45.67`
+
+**Step 2: Update TLSRoute hostnames in `kic/kic-gateway.yaml`**
+
+Replace `127-0-0-1` with your LoadBalancer IP using dashes instead of dots:
+
+```yaml
+# Example: If LoadBalancer IP is 35.123.45.67
+# Change from:
+hostnames:
+  - "bootstrap.operations.127-0-0-1.sslip.io"
+# Change to:
+hostnames:
+  - "bootstrap.operations.35-123-45-67.sslip.io"
+```
+
+Update all four TLSRoutes (operations, analytics, partners, and direct-backend) with the new IP format.
+
+**Step 3: Update Terraform SNI suffix in `terraform/event_gateway.tf`**
+
+Find the `external_listener_policy_forward_to_virtual_cluster` resource and update the `sni_suffix`:
+
+```hcl
+# Change from:
+sni_suffix = ".127-0-0-1.sslip.io"
+# Change to:
+sni_suffix = ".35-123-45-67.sslip.io"
+```
+
+**Step 4: Apply the changes**
+
+```bash
+# Re-apply Terraform configuration
+terraform -chdir=terraform apply
+
+# Re-apply KIC Gateway configuration
+kubectl apply -f kic/kic-gateway.yaml
+
+# Restart KEG to pick up new configuration
+kubectl rollout restart deployment/keg -n keg
+```
+
+> **Note:** The [sslip.io](https://sslip.io) service automatically resolves hostnames like `35-123-45-67.sslip.io` to `35.123.45.67`, eliminating the need for DNS configuration.
+
 ### 7. Deploy Kafka Connect
 
 1. Deploy Kafka Connect clusters
@@ -302,56 +356,6 @@ Key metrics available include:
 - `kong_keg_kafka_request_received_count_total`: Total API requests received
 
 The `OTEL_SERVICE_NAME` environment variable (set to `keg`) identifies the service name in traces and metrics, making it easier to filter and identify Event Gateway data in observability tools.
-
-#### Troubleshooting Jaeger Pod
-
-**Symptom:** Jaeger pod stuck in `Pending` state or PVC fails to bind
-
-**Cause:** Storage class incompatibility with your cluster's node type.
-
-When you don't specify a `storageClassName`, Kubernetes automatically uses the cluster's default storage class. This default varies by platform and is usually compatible with most node types. However, there are edge cases where the default storage class is incompatible with specific machine types.
-
-**Example:** On GKE, the default storage class often uses `pd-balanced` disks, which work with most modern machine types (n2, n2d, c3, etc.) but are **not compatible** with c4 compute-optimized machines. In this case, you need to explicitly specify a compatible storage class like `pd-standard`.
-
-**Solution:**
-
-1. **Check your cluster's available storage classes:**
-
-```bash
-   kubectl get storageclass
-```
-
-Look for the one marked `(default)` and verify if it's compatible with your node types.
-
-2. **Set a compatible storage class** in `observability/jaeger.yaml`:
-
-   Find the PersistentVolumeClaim section and uncomment the `storageClassName` line:
-
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: jaeger-badger-pvc
-  namespace: observability
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: standard # ← Uncomment and set to a compatible storage class
-```
-
-Replace `standard` with the appropriate storage class name for your platform.
-
-3. **Apply the changes:**
-
-```bash
-   kubectl delete pvc jaeger-badger-pvc -n observability
-   kubectl apply -f observability/jaeger.yaml
-```
-
-> **Tip:** Consult your cloud provider's documentation to find compatible storage classes for your specific node/machine types.
 
 ### 10. Ensure loadbalancer service is accessible
 
@@ -509,6 +513,86 @@ You can use any Kafka-compatible client with the same broker addresses and TLS s
 2. **Kong Ingress Controller**: Routes TLS traffic based on SNI to KEG service
 3. **KEG**: Terminates TLS, applies topic prefixing, forwards to Kafka
 4. **Kafka Cluster**: Processes requests with prefixed topics (`<virtual-cluster-prefix>-<topic-name>`)
+
+## Troubleshooting
+
+### Direct Backend Kafka Access (Bypassing KEG)
+
+A direct access route to the backend Kafka cluster is deployed by default in `kic/kic-gateway.yaml`. This route bypasses KEG and connects directly to the backend Kafka cluster's TLS listener (port 9093), which is useful for troubleshooting to isolate whether issues are with KEG or the backend Kafka cluster.
+
+**Access hostnames:**
+
+- Local/minikube: `direct.backend.127-0-0-1.sslip.io:9094`
+- Cloud: Replace `127-0-0-1` with your LoadBalancer IP (e.g., `direct.backend.35-123-45-67.sslip.io:9094`)
+
+**Example using kafkactl:**
+
+Add this context to your `.kafkactl.yml`:
+
+```yaml
+direct-backend:
+  brokers:
+    - direct.backend.127-0-0-1.sslip.io:9094
+  tls:
+    enabled: true
+    insecure: true
+```
+
+Then test:
+
+```bash
+kafkactl get topics --context direct-backend
+```
+
+> **Note:** This bypasses KEG's virtual cluster routing, so you'll see the actual backend topic names (with prefixes like `operations-`, `analytics-`, `partners-`).
+
+### Jaeger Pod Issues
+
+**Symptom:** Jaeger pod stuck in `Pending` state or PVC fails to bind
+
+**Cause:** Storage class incompatibility with your cluster's node type.
+
+When you don't specify a `storageClassName`, Kubernetes automatically uses the cluster's default storage class. In most cases, the default storage class works fine with standard node types. However, in rare cases with specialized machine types (e.g., GKE's c4 compute-optimized instances), the default storage class may be incompatible.
+
+**Solution:**
+
+1. **Check your cluster's available storage classes:**
+
+```bash
+kubectl get storageclass
+```
+
+Look for the one marked `(default)` and verify if it's compatible with your node types.
+
+2. **If needed, set a compatible storage class** in `observability/jaeger.yaml`:
+
+Find the PersistentVolumeClaim section and uncomment/set the `storageClassName` line:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jaeger-badger-pvc
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard # ← Uncomment and set to a compatible storage class
+```
+
+Replace `standard` with the appropriate storage class name for your platform.
+
+3. **Apply the changes:**
+
+```bash
+kubectl delete pvc jaeger-badger-pvc -n observability
+kubectl apply -f observability/jaeger.yaml
+```
+
+> **Tip:** Consult your cloud provider's documentation to find compatible storage classes for your specific node/machine types. Most standard machine types work fine with the cluster default.
 
 ## Internal Notes
 
